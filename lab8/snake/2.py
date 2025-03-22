@@ -108,7 +108,6 @@ def reset_game():
     delay = 0.1
     update_scoreboard()
 
-# ===== ПРОВЕРКА, НЕ ЗАНЯТО ЛИ МЕСТО ЗМЕЙКОЙ =====
 def position_is_free(x, y):
     # Смотрим, не совпадает ли точка (x, y) с головой или сегментами
     if round(head.xcor()) == x and round(head.ycor()) == y:
@@ -118,17 +117,17 @@ def position_is_free(x, y):
             return False
     return True
 
-# ===== ОСНОВНОЙ ЦИКЛ =====
+#ОСНОВНОЙ ЦИКЛ
 while True:
     wind.update()  # ручное обновление экрана
     
-    # 1) Выход за границы
+    #выход за границы
     if head.xcor() > 290 or head.xcor() < -290 or head.ycor() > 290 or head.ycor() < -290:
         reset_game()
 
-    # 2) Столкновение с едой
+    #столкновение с едой
     if head.distance(food) < 20:
-        # Ставим еду в новое место (не занятое змеёй)
+        #ставим еду в новое место
         while True:
             new_x = random.randrange(-280, 280, 20)
             new_y = random.randrange(-280, 280, 20)
@@ -136,7 +135,7 @@ while True:
                 food.goto(new_x, new_y)
                 break
 
-        # Увеличиваем хвост
+        #увеличиваем хвост
         new_segment = turtle.Turtle()
         new_segment.speed(0)
         new_segment.shape("square")
@@ -144,39 +143,39 @@ while True:
         new_segment.penup()
         segments.append(new_segment)
 
-        # Счёт и уровень
+        #счёт и уровень
         score += 10
         if score > high_score:
             high_score = score
 
-        level = score // 30 + 1  # каждые 30 очков растёт уровень
+        level = score // 30 + 1  #каждые 30 очков растёт уровень
         delay = 0.1 - (level - 1) * 0.01
         if delay < 0.01:
             delay = 0.01
 
         update_scoreboard()
 
-    # 3) Движение хвоста
-    # от конца к началу
+    #движение хвоста
+    #от конца к началу
     for i in range(len(segments) - 1, 0, -1):
         x = segments[i - 1].xcor()
         y = segments[i - 1].ycor()
         segments[i].goto(x, y)
 
-    # Первый сегмент в позицию головы
+    #первый сегмент в позицию головы
     if len(segments) > 0:
         segments[0].goto(head.xcor(), head.ycor())
 
-    # Двигаем голову
+    #двигаем голову
     move()
 
-    # 4) Проверка столкновения с хвостом
+    #проверка столкновения с хвостом
     for seg in segments:
         if seg.distance(head) < 20:
             reset_game()
             break
 
-    # Пауза между кадрами (скорость змейки)
+    #пауза между кадрами (скорость змейки)
     time.sleep(delay)
 
 wind.mainloop()
