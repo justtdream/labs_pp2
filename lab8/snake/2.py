@@ -2,82 +2,181 @@ import turtle
 import time
 import random
 
-score = 0 
-high_score=0
-delay=0.1
+delay = 0.1  #задержка
+score = 0
+high_score = 0
+level = 1
 
-#create a screen
 wind = turtle.Screen()
-wind.title("Snake")
+wind.title("Snake Game (Arrow Keys)")
 wind.bgcolor("green")
-wind.setup(600,600)
-        #width, height
-wind.tracer(0)
+wind.setup(width=600, height=600)
+wind.tracer(0)  #отключаем авто-обновление экрана
 
-#head of snake
+#Головa змейки
 head = turtle.Turtle()
 head.shape("square")
 head.color("yellow")
 head.penup()
-head.goto(0,0)
-head.direction ='Stop'
+head.goto(0, 0)
+head.direction = "stop"
 
-#food
+#Хвост 
+segments = []
+
+#Еда
 food = turtle.Turtle()
-colors = random.choice(['red', 'green', 'black'])
-shapes = random.choice(['square', 'circle', 'triangle'])
-food.speed (0)
-food.shape(shapes)
-food.color(colors)
+food.speed(0)
+food.shape("circle")
+food.color("red")
 food.penup()
 food.goto(0, 100)
 
-pen=turtle.Turtle()
+# Текст для счёта и уровня
+pen = turtle.Turtle()
 pen.speed(0)
 pen.shape("square")
 pen.color("white")
 pen.penup()
 pen.hideturtle()
 pen.goto(0, 250)
-pen.write("Score: 0   Heigh score: 0", align="center")
-font = ("Arial", 24, "bold")
+pen.write("Score: 0  High Score: 0  Level: 1",
+          align="center", font=("Arial", 24, "bold"))
 
-def group():
-    if head.direction != "dowind":
+#Управление
+def go_up():
+    if head.direction != "down":
         head.direction = "up"
 
-def godowind():
+def go_down():
     if head.direction != "up":
-        head.direction = "dowind"
+        head.direction = "down"
 
-def goleft():
+def go_left():
     if head.direction != "right":
-        head.direction = "left" 
+        head.direction = "left"
 
-def goright():
+def go_right():
     if head.direction != "left":
         head.direction = "right"
 
+#Движения головы
 def move():
     if head.direction == "up":
         y = head.ycor()
-        head.sety(y+20)
+        head.sety(y + 20)
 
-    if head.direction == "down":
+    elif head.direction == "down":
         y = head.ycor()
-        head.sety(y-20)
-    
-    if head.direction == "left":
-        x = head.xcor
-        head.sety(x-20)
+        head.sety(y - 20)
 
-    if head.direction == "right":
-        x = head.xcor
-        head.sety(x+20)
+    elif head.direction == "left":
+        x = head.xcor()
+        head.setx(x - 20)
 
+    elif head.direction == "right":
+        x = head.xcor()
+        head.setx(x + 20)
+
+#Привязываем их к стрелкам
 wind.listen()
-wind.onkeypress(group, "w")
-wind.onkeypress(godowind, "s")
-wind.onkeypress(goleft, "a")
-wind.onkeypress(goright, "d")
+wind.onkeypress(go_up, "Up")
+wind.onkeypress(go_down, "Down")
+wind.onkeypress(go_left, "Left")
+wind.onkeypress(go_right, "Right")
 
+# ===== ФУНКЦИЯ ОБНОВЛЕНИЯ ТЕКСТА (счёт, уровень) =====
+def update_scoreboard():
+    pen.clear()
+    pen.write(f"Score: {score}  High Score: {high_score}  Level: {level}",
+              align="center", font=("Arial", 24, "bold"))
+
+# ===== ФУНКЦИЯ СБРОСА ИГРЫ =====
+def reset_game():
+    global score, delay, level
+    time.sleep(1)
+    head.goto(0, 0)
+    head.direction = "stop"
+
+    # Убираем хвост
+    for segment in segments:
+        segment.goto(1000, 1000)
+    segments.clear()
+
+    score = 0
+    level = 1
+    delay = 0.1
+    update_scoreboard()
+
+# ===== ПРОВЕРКА, НЕ ЗАНЯТО ЛИ МЕСТО ЗМЕЙКОЙ =====
+def position_is_free(x, y):
+    # Смотрим, не совпадает ли точка (x, y) с головой или сегментами
+    if round(head.xcor()) == x and round(head.ycor()) == y:
+        return False
+    for seg in segments:
+        if round(seg.xcor()) == x and round(seg.ycor()) == y:
+            return False
+    return True
+
+# ===== ОСНОВНОЙ ЦИКЛ =====
+while True:
+    wind.update()  # ручное обновление экрана
+    
+    # 1) Выход за границы
+    if head.xcor() > 290 or head.xcor() < -290 or head.ycor() > 290 or head.ycor() < -290:
+        reset_game()
+
+    # 2) Столкновение с едой
+    if head.distance(food) < 20:
+        # Ставим еду в новое место (не занятое змеёй)
+        while True:
+            new_x = random.randrange(-280, 280, 20)
+            new_y = random.randrange(-280, 280, 20)
+            if position_is_free(new_x, new_y):
+                food.goto(new_x, new_y)
+                break
+
+        # Увеличиваем хвост
+        new_segment = turtle.Turtle()
+        new_segment.speed(0)
+        new_segment.shape("square")
+        new_segment.color("orange")
+        new_segment.penup()
+        segments.append(new_segment)
+
+        # Счёт и уровень
+        score += 10
+        if score > high_score:
+            high_score = score
+
+        level = score // 30 + 1  # каждые 30 очков растёт уровень
+        delay = 0.1 - (level - 1) * 0.01
+        if delay < 0.01:
+            delay = 0.01
+
+        update_scoreboard()
+
+    # 3) Движение хвоста
+    # от конца к началу
+    for i in range(len(segments) - 1, 0, -1):
+        x = segments[i - 1].xcor()
+        y = segments[i - 1].ycor()
+        segments[i].goto(x, y)
+
+    # Первый сегмент в позицию головы
+    if len(segments) > 0:
+        segments[0].goto(head.xcor(), head.ycor())
+
+    # Двигаем голову
+    move()
+
+    # 4) Проверка столкновения с хвостом
+    for seg in segments:
+        if seg.distance(head) < 20:
+            reset_game()
+            break
+
+    # Пауза между кадрами (скорость змейки)
+    time.sleep(delay)
+
+wind.mainloop()
