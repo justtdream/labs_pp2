@@ -8,7 +8,7 @@ high_score = 0
 level = 1
 
 wind = turtle.Screen()
-wind.title("Snake Game (Arrow Keys)")
+wind.title("Snake game")
 wind.bgcolor("green")
 wind.setup(width=600, height=600)
 wind.tracer(0)  
