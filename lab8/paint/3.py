@@ -8,16 +8,11 @@ pygame.init()
 1 линия
 2 прямоугольник
 3 круг 
-4 Квадрат
-5 прямоугольный треугольник
-6 равносторонний треугольник
-7 ромб
+4 квадрат
 E ластик
 R красный цвет
 B синий цвет
 K черный цвет
-+ увеличить толщину
-- уменьшить толщину
 '''
 
 #параметры окна
@@ -62,10 +57,6 @@ while running:
                 tool = "square"
             elif event.key == pygame.K_5:
                 tool = "triangle"
-            elif event.key == pygame.K_6:
-                tool = "equilateral"
-            elif event.key == pygame.K_7:
-                tool = "rhombus"
             elif event.key == pygame.K_e:
                 tool = "eraser"
             elif event.key == pygame.K_r:
@@ -74,10 +65,6 @@ while running:
                 color = BLUE
             elif event.key == pygame.K_k:
                 color = BLACK
-            elif event.key == pygame.K_EQUALS:
-                thickness += 1
-            elif event.key == pygame.K_MINUS and thickness > 1:
-                thickness -= 1
 
         #обработка рисования
         if event.type == pygame.MOUSEBUTTONDOWN:
