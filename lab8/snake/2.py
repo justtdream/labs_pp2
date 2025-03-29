@@ -1,161 +1,179 @@
-import turtle
-import time
+import pygame
 import random
+import time
 
-delay = 0.1  
-score = 0
-high_score = 0
-level = 1
+pygame.init()
 
-wind = turtle.Screen()
-wind.title("Snake game")
-wind.bgcolor("green")
-wind.setup(width=600, height=600)
-wind.tracer(0)  
+# про экран
+WIDTH = 600
+HEIGHT = 600
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+CELL = 30
 
-#Головa змейки
-head = turtle.Turtle()
-head.shape("square")
-head.color("yellow")
-head.penup()
-head.goto(0, 0)
-head.direction = "stop"
+running = True
+FPS = 5
+clock = pygame.time.Clock()
 
-segments = []
+# цвета
+WHITE = (255, 255, 255)
+GRAY = (200, 200, 200)
+BLACK = (0, 0, 0)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
+YELLOW = (255, 255, 0)
 
-#еда
-food = turtle.Turtle()
-food.speed(0)
-food.shape("circle")
-food.color("red")
-food.penup()
-food.goto(0, 100)
+# текст
+font = pygame.font.SysFont("Verdana", 60) # создаем шрифт 
+text_game_over = font.render("Game Over", True, BLACK) # генирируем текст
+text_game_over_rect = text_game_over.get_rect(center = (WIDTH // 2, HEIGHT // 2))
 
-#счетчик и уровнь
-pen = turtle.Turtle()
-pen.speed(0)
-pen.shape("square")
-pen.color("white")
-pen.penup()
-pen.hideturtle()
-pen.goto(0, 250)
-pen.write("Score: 0  High Score: 0  Level: 1",
-          align="center", font=("Arial", 24, "bold"))
+# счетчик и уровень
+snake_score = 0
+small_font = pygame.font.SysFont("Verdana", 32) #создаем шрифт для отображения счёта и уровня.
+current_level = 1
 
-#управление
-def go_up():
-    if head.direction != "down":
-        head.direction = "up"
-def go_down():
-    if head.direction != "up":
-        head.direction = "down"
-def go_left():
-    if head.direction != "right":
-        head.direction = "left"
-def go_right():
-    if head.direction != "left":
-        head.direction = "right"
-#движения головы
-def move():
-    if head.direction == "up":
-        y = head.ycor()
-        head.sety(y + 20)
-    elif head.direction == "down":
-        y = head.ycor()
-        head.sety(y - 20)
-    elif head.direction == "left":
-        x = head.xcor()
-        head.setx(x - 20)
-    elif head.direction == "right":
-        x = head.xcor()
-        head.setx(x + 20)
+# клеточки
+def draw_grid_chess():  # рисует игровое поле в виде клеточек, чередующихся цветов
+    colors = [WHITE, GRAY]
 
-#привязываем к стрелкам
-wind.listen()
-wind.onkeypress(go_up, "Up")
-wind.onkeypress(go_down, "Down")
-wind.onkeypress(go_left, "Left")
-wind.onkeypress(go_right, "Right")
+    for i in range(HEIGHT // CELL):
+        for j in range(WIDTH // CELL):
+            pygame.draw.rect(screen, colors[(i + j) % 2], (i * CELL, j * CELL, CELL, CELL))
 
-#обновление текста
-def update_scoreboard():
-    pen.clear()
-    pen.write(f"Score: {score}  High Score: {high_score}  Level: {level}",
-              align="center", font=("Arial", 24, "bold"))
+# классы
+class Point:  #хранения координат змейки и еды
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
 
-#сброс игры
-def reset_game():
-    global score, delay, level
-    time.sleep(1)
-    head.goto(0, 0)
-    head.direction = "stop"
+class Snake:
+    def __init__(self):
+        self.body = [Point(10, 11), Point(10, 12), Point(10, 13)]
+        self.dx = 1  
+        self.dy = 0
 
-    for segment in segments:
-        segment.goto(1000, 1000)
-    segments.clear()
+    def move(self):
+        for i in range(len(self.body) - 1, 0, -1):
 
-    score = 0
-    level = 1
-    delay = 0.1
-    update_scoreboard()
+            self.body[i].x = self.body[i - 1].x
+            self.body[i].y = self.body[i - 1].y
 
-def position_is_free(x, y):
-    if round(head.xcor()) == x and round(head.ycor()) == y:
-        return False
-    for seg in segments:
-        if round(seg.xcor()) == x and round(seg.ycor()) == y:
-            return False
-    return True
+        self.body[0].x += self.dx
+        self.body[0].y += self.dy
 
-while True:
-    wind.update()  
-    #выход за границы
-    if head.xcor() > 290 or head.xcor() < -290 or head.ycor() > 290 or head.ycor() < -290:
-        reset_game()
+        # проверяет столкновение с границами
+        if (self.body[0].x > WIDTH // CELL - 1 or self.body[0].x < 0 or 
+            self.body[0].y > HEIGHT // CELL - 1 or self.body[0].y < 0):
+                screen.fill(RED)
+                screen.blit(text_game_over, text_game_over_rect)
+                pygame.display.flip()
+                time.sleep(3)
+                pygame.quit() 
+                exit()
 
-    #столкновение с едой
-    if head.distance(food) < 20:
+        # Проверка столкновений головы с хвостом       
+        for segment in self.body[1:]:
+            if self.body[0].x == segment.x and self.body[0].y == segment.y:
+                screen.fill(RED)
+                screen.blit(text_game_over, text_game_over_rect)
+                pygame.display.flip()
+                time.sleep(3)
+                pygame.quit()
+                exit()
+
+
+    def draw(self):
+        head = self.body[0]
+        pygame.draw.rect(screen, RED, (head.x * CELL, head.y * CELL, CELL, CELL))
+        for segment in self.body[1:]:
+            pygame.draw.rect(screen, YELLOW, (segment.x * CELL, segment.y * CELL, CELL, CELL))
+
+    def check_collision(self, food):
+        global snake_score
+        head = self.body[0]
+        if head.x == food.pos.x and head.y == food.pos.y:
+            snake_score += 1
+            self.body.append(Point(head.x, head.y))
+            food.generate_random_pos()
+            
+
+snake = Snake()
+
+class Food:
+    def __init__(self):
+        self.pos = Point(9, 9)
+
+    def draw(self):
+        pygame.draw.rect(screen, GREEN, (self.pos.x * CELL, self.pos.y * CELL, CELL, CELL))
+
+    def generate_random_pos(self):
         while True:
-            new_x = random.randrange(-280, 280, 20)
-            new_y = random.randrange(-280, 280, 20)
-            if position_is_free(new_x, new_y):
-                food.goto(new_x, new_y)
+            # рандомная генерация координатов еды
+            new_x = random.randint(0, WIDTH // CELL - 1)
+            new_y = random.randint(0, HEIGHT // CELL - 1)
+            collision = False 
+            for segment in snake.body:
+                if segment.x == new_x and segment.y == new_y:
+                    collision = True  
+                    break  
+
+            if not collision:
+                self.pos = Point(new_x, new_y)
                 break
 
-        new_segment = turtle.Turtle()
-        new_segment.speed(0)
-        new_segment.shape("square")
-        new_segment.color("orange")
-        new_segment.penup()
-        segments.append(new_segment)
+food = Food()
 
-        #счёт и уровень
-        score += 10
-        if score > high_score:
-            high_score = score
+# основной цикл
+while running:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_RIGHT:
+                snake.dx = 1
+                snake.dy = 0
+            elif event.key == pygame.K_LEFT:
+                snake.dx = -1
+                snake.dy = 0
+            elif event.key == pygame.K_DOWN:
+                snake.dx = 0
+                snake.dy = 1
+            elif event.key == pygame.K_UP:
+                snake.dx = 0
+                snake.dy = -1
+            
 
-        level = score // 30 + 1  #каждые 30 очков растёт уровень
-        delay = 0.1 - (level - 1) * 0.01
-        if delay < 0.01:
-            delay = 0.01
 
-        update_scoreboard()
+    draw_grid_chess()
 
-    #движение хвоста
-    for i in range(len(segments) - 1, 0, -1):
-        x = segments[i - 1].xcor()
-        y = segments[i - 1].ycor()
-        segments[i].goto(x, y)
-    if len(segments) > 0:
-        segments[0].goto(head.xcor(), head.ycor())
-    move()
+    snake.move()
 
-    #проверка столкновения с хвостом
-    for seg in segments:
-        if seg.distance(head) < 20:
-            reset_game()
-            break
+    # текст счета
+    text_score = small_font.render(f"Score: {snake_score}", True, YELLOW)
+    text_score_rect = text_score.get_rect(center = (WIDTH // 2, (HEIGHT // CELL) + 20))
+    screen.blit(text_score, text_score_rect)
+    
+    # текст уровня
+    text_level = small_font.render(f'Level: {current_level}', True, RED)
+    text_level_rect = text_level.get_rect(center = ((WIDTH // 2, (HEIGHT // CELL) - 10)))
+    screen.blit(text_level, text_level_rect)
 
-    time.sleep(delay)
+    snake.check_collision(food)
 
-wind.mainloop()
+    snake.draw()
+    food.draw()
+
+
+    # быстрее каждые 5 счетов
+    if snake_score % 5 == 0 and snake_score != 0:
+        FPS = 5 + (snake_score // 5)
+        current_level = 1 + (snake_score // 5)
+
+    
+
+
+    pygame.display.flip()
+    clock.tick(FPS)
+
+pygame.quit()
