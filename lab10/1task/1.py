@@ -19,8 +19,9 @@ conn.commit()
 
 # Функция для загрузки данных из CSV файла
 def upload_csv(filename):
-    command = """INSERT INTO phonebook(id, name, telephone) VALUES (%s, %s, %s)"""
-    filename = "lab10/1task/phonebookk.csv"
+    command = """INSERT INTO phonebook(id, name, telephone) VALUES (%s, %s, %s)"""  #переменная command для вставки данных в таблицу
+    # INSERT INTO table_name (in which columns) VALUES (name_values)- будет использоваться для вставки данных в таблицу 
+    filename = "lab10/1task/phonebookk.csv"  
     try:
         with open(filename, "r") as csvfile:
             csvreader = csv.reader(csvfile, delimiter=',')

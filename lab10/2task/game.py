@@ -249,7 +249,7 @@ class Snake:
 
                 
             
-        # Drawing head and body of the snake
+    # Drawing head and body of the snake
     def draw(self):
         head = self.body[0]                  # (coordinate x, coordinate y) , w,   h  
         pygame.draw.rect(screen, GOLD_YELLOW, (head.x * CELL, head.y * CELL, CELL, CELL))
@@ -321,7 +321,7 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_p:  # press 'P' to pause/unpause
+            if event.key == pygame.K_s:  # press 'S' to pause/unpause
                 paused = not paused
                 if paused:
                     # save score & level on pause
@@ -329,7 +329,7 @@ while running:
                         "UPDATE user_score SET score = %s, level = %s, length = %s WHERE user_id = %s;",
                         (snake_score, current_level, len(snake.body), user_id)
                     )
-                    print("Game paused. Score and level saved to database.")
+                    print("Game stoped. Score and level saved to database.")
             if event.key == pygame.K_RIGHT:
                 snake.dx = 1
                 snake.dy = 0
@@ -343,7 +343,7 @@ while running:
                 snake.dx = 0
                 snake.dy = -1
     if paused:
-        pause_text = small_font.render("Paused - Press P to Resume", True, BLACK)
+        pause_text = small_font.render("Paused - Press S to Resume", True, BLACK)
         screen.blit(pause_text, (WIDTH // 2 - 150, HEIGHT // 2))
         pygame.display.update()
         continue
